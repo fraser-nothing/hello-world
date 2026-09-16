@@ -19,9 +19,9 @@
     text-align: center;
     padding: 2rem;
     box-sizing: border-box;
+    font-family: "Playfair Display", serif;
   }
   h1 {
-    font-family: "Playfair Display", serif;
     font-weight: 600;
     color: #3f2e26;
     font-size: 2.2rem;
@@ -35,10 +35,110 @@
     border-radius: 12px;
     box-shadow: 0 10px 30px rgba(63, 46, 38, 0.25);
   }
+  .love-question {
+    color: #3f2e26;
+    font-size: 1.3rem;
+    margin: 0;
+  }
+  .love-box {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: 16px;
+    border: none;
+    background-color: #f6ede1;
+    box-shadow: 0 6px 18px rgba(63, 46, 38, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+  .love-box:hover {
+    transform: scale(1.06);
+  }
+  .love-box:active {
+    transform: scale(0.94);
+  }
+  .flying-heart {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    font-size: 1.6rem;
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: float-up 1.1s ease-out forwards;
+  }
+  @keyframes float-up {
+    0% {
+      transform: translate(-50%, -50%) scale(1) rotate(0deg);
+      opacity: 1;
+    }
+    100% {
+      transform: translate(-50%, -170px) scale(1.4) rotate(var(--drift, 0deg));
+      opacity: 0;
+    }
+  }
+  .love-count {
+    color: #3f2e26;
+    font-size: 1.05rem;
+    min-height: 1.4em;
+  }
 </style>
 </head>
 <body>
 <h1>Hello, my name is Fraser and this is my dog Skipper</h1>
 <img src="skipper.jpg" alt="Skipper the dog">
+<p class="love-question">Would you like to send Skipper some love?</p>
+<button class="love-box" id="loveBox" aria-label="Send Skipper some love">❤️</button>
+<p class="love-count" id="loveCount"></p>
+
+<script>
+  const NAMESPACE = "fraser-stone-hello-world";
+  const KEY = "skipper-love-v2";
+  const box = document.getElementById("loveBox");
+  const countText = document.getElementById("loveCount");
+
+  function formatCount(n) {
+    const people = n === 1 ? "person has" : "people have";
+    return `${n} ${people} sent their love`;
+  }
+
+  async function loadCount() {
+    try {
+      const res = await fetch(`https://abacus.jasoncameron.dev/get/${NAMESPACE}/${KEY}`);
+      const data = await res.json();
+      countText.textContent = formatCount(typeof data.value === "number" ? data.value : 0);
+    } catch (err) {
+      countText.textContent = formatCount(0);
+    }
+  }
+
+  function spawnHeart() {
+    const heart = document.createElement("span");
+    heart.className = "flying-heart";
+    heart.textContent = "❤️";
+    heart.style.setProperty("--drift", `${Math.random() * 60 - 30}deg`);
+    box.appendChild(heart);
+    heart.addEventListener("animationend", () => heart.remove());
+  }
+
+  box.addEventListener("click", async () => {
+    spawnHeart();
+    box.disabled = true;
+    try {
+      const res = await fetch(`https://abacus.jasoncameron.dev/hit/${NAMESPACE}/${KEY}`);
+      const data = await res.json();
+      countText.textContent = formatCount(data.value);
+    } catch (err) {
+      countText.textContent = "Couldn't reach the love counter, try again later.";
+    } finally {
+      box.disabled = false;
+    }
+  });
+
+  loadCount();
+</script>
 </body>
 </html>
